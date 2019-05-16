@@ -4,6 +4,7 @@ import com.dainy33.comm.MsgTransport;
 import com.dainy33.message.*;
 import com.dainy33.node.NodeInfo;
 import com.dainy33.utils.PaxosTimer;
+import com.google.gson.Gson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,6 +109,13 @@ public class Proposer extends Base {
             highestOtherProposalID = 0;
         }
 
+        public boolean checkMethodGet(BasePaxosMsg paxosMsg){
+            Gson gson = new Gson();
+            KVMessage kvMessage = gson.fromJson(paxosMsg.getMsgJson(), KVMessage.class);
+            return kvMessage.getTypeEnum().equals(KVMessage.TypeEnum.GET);
+
+        }
+
         public int getCurProposalID() {
             return curProposalID;
         }
@@ -149,6 +157,9 @@ public class Proposer extends Base {
     // 记录当前轮投票中是否被acceptor拒绝过
     private boolean wasRejectedBySomeOne;
 
+    //记录请求的类型是否为get
+    private boolean isMethodGet;
+
     private int allNodeCount;
 
     public Proposer(MsgTransport msgTransport, NodeInfo curNodeInfo, InstanceManager InstanceManager, PaxosTimer timer, int allNodeCount) {
@@ -156,6 +167,7 @@ public class Proposer extends Base {
         this.timer = timer;
         this.canSkipPrepare = false;
         this.wasRejectedBySomeOne = false;
+        this.isMethodGet = false;
         this.proposerStateMap = new HashMap<>();
         this.allNodeCount = allNodeCount;
     }
@@ -168,6 +180,14 @@ public class Proposer extends Base {
         int curInstanceID = getInstanceManager().getInstanceID().addAndGet(1);
         ProposerState proposerState = new ProposerState(0, value, curInstanceID, allNodeCount);
         proposerStateMap.put(curInstanceID, proposerState);
+
+        if (isMethodGet && !wasRejectedBySomeOne) {
+            logger.info("Instance {} skip prepare", curInstanceID);
+            accept(proposerState);
+        } else {
+            logger.info("Instance {} start prepare", curInstanceID);
+            prepare(wasRejectedBySomeOne, proposerState);
+        }
 
         if (canSkipPrepare && !wasRejectedBySomeOne) {
             logger.info("Instance {} skip prepare", curInstanceID);
@@ -201,6 +221,8 @@ public class Proposer extends Base {
         prepareMsg.setInstanceID(proposerState.instanceID);
         prepareMsg.setNodeID(getCurNodeInfo().getNodeID());
         prepareMsg.setProposalID(proposerState.getCurProposalID());
+
+        proposerState.checkMethodGet(prepareMsg);
 
         // 清空msgCounter
         proposerState.getMsgCounter().startNewRound();

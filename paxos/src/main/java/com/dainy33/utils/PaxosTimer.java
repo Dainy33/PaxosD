@@ -3,7 +3,7 @@ package com.dainy33.utils;
 import java.util.concurrent.*;
 
 /**
- * Created by little on 2017-06-20.
+ * Created by dainy33 on 2019-04-20.
  */
 public class PaxosTimer {
     private ScheduledExecutorService executor;

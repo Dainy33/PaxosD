@@ -2,7 +2,7 @@ package com.dainy33.utils;
 
 /**
  * 定时器超时
- * Created by little on 2017-06-20.
+ * Created by dainy33 on 2019-04-20.
  */
 public interface TimeoutListener {
     /**

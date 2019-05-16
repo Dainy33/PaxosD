@@ -11,8 +11,8 @@ public class PaxosKVClient {
         param.setOnConnect(conn -> {
             new Thread(() -> {
                 KVMessage kvMessage1 = new KVMessage(KVMessage.TypeEnum.PUT, "key1", "value1");
-                KVMessage kvMessage2 = new KVMessage(KVMessage.TypeEnum.PUT, "key2", "value2");
-                KVMessage kvMessage3 = new KVMessage(KVMessage.TypeEnum.PUT, "key3", "value3");
+                KVMessage kvMessage2 = new KVMessage(KVMessage.TypeEnum.PUT, "key1", "value2");
+                KVMessage kvMessage3 = new KVMessage(KVMessage.TypeEnum.GET, "key1", "null");
                 try {
                     conn.write(kvMessage1.getJson().getBytes());
                     conn.write(kvMessage2.getJson().getBytes());
